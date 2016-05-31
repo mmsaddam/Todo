@@ -22,6 +22,7 @@ protocol TableViewCellDelegate {
 class TableViewCell: UITableViewCell, UITextFieldDelegate {
     
     let gradientLayer = CAGradientLayer()
+		let iconLayer = CALayer()
     var originalCenter = CGPoint()
     var deleteOnDragRelease = false, completeOnDragRelease = false
     var tickLabel: UILabel, crossLabel: UILabel
@@ -44,16 +45,17 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
     
     override init(style: UITableViewCellStyle,
         reuseIdentifier: String?) {
+			
         // create a label that renders the to-do item text
         label = StrikeThroughText(frame: CGRect.null)
-        label.textColor = UIColor.whiteColor()
-        label.font = UIFont.boldSystemFontOfSize(16)
+        label.textColor = Color.textColor
+        label.font = UIFont.systemFontOfSize(16)
         label.backgroundColor = UIColor.clearColor()
         
         // utility method for creating the contextual cues
         func createCueLabel() -> UILabel {
             let label = UILabel(frame: CGRect.null)
-            label.textColor = UIColor.whiteColor()
+            label.textColor = UIColor.redColor()
             label.font = UIFont.boldSystemFontOfSize(32.0)
             label.backgroundColor = UIColor.clearColor()
             return label
@@ -68,6 +70,8 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
         crossLabel.textAlignment = .Left
         
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+			
+			 // self.imageView?.image = UIImage(named: "plus.png")
         
         label.delegate = self
         label.contentVerticalAlignment = .Center
@@ -78,21 +82,26 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
         // remove the default blue highlight for selected cells
         selectionStyle = .None
         
-        // gradient layer for cell
-        gradientLayer.frame = bounds
-        let color1 = UIColor(white: 1.0, alpha: 0.2).CGColor as CGColorRef
-        let color2 = UIColor(white: 1.0, alpha: 0.1).CGColor as CGColorRef
-        let color3 = UIColor.clearColor().CGColor as CGColorRef
-        let color4 = UIColor(white: 0.0, alpha: 0.1).CGColor as CGColorRef
-        gradientLayer.colors = [color1, color2, color3, color4]
-        gradientLayer.locations = [0.0, 0.01, 0.95, 1.0]
-        layer.insertSublayer(gradientLayer, atIndex: 0)
-        
+//        // gradient layer for cell
+//        gradientLayer.frame = bounds
+//        let color1 = UIColor(white: 1.0, alpha: 0.2).CGColor as CGColorRef
+//        let color2 = UIColor(white: 1.0, alpha: 0.1).CGColor as CGColorRef
+//        let color3 = UIColor.clearColor().CGColor as CGColorRef
+//        let color4 = UIColor(white: 0.0, alpha: 0.1).CGColor as CGColorRef
+//        gradientLayer.colors = [color1, color2, color3, color4]
+//        gradientLayer.locations = [0.0, 0.01, 0.95, 1.0]
+//        layer.insertSublayer(gradientLayer, atIndex: 0)
+			
         // add a layer that renders a green background when an item is complete
         itemCompleteLayer = CALayer(layer: layer)
-        itemCompleteLayer.backgroundColor = UIColor(red: 0.0, green: 0.6, blue: 0.0, alpha: 1.0).CGColor
+        itemCompleteLayer.backgroundColor = Color.test.CGColor
         itemCompleteLayer.hidden = true
         layer.insertSublayer(itemCompleteLayer, atIndex: 0)
+			
+			  iconLayer.backgroundColor = Color.themecolor.CGColor
+			  iconLayer.frame = CGRectMake(5, bounds.size.height/2 - 2.5, 10, 10)
+			  iconLayer.cornerRadius = 5
+			  layer.insertSublayer(iconLayer, atIndex: 0)
         
         // add a pan recognizer
         let recognizer = UIPanGestureRecognizer(target: self, action: #selector(TableViewCell.handlePan(_:)))
@@ -100,7 +109,7 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
         addGestureRecognizer(recognizer)
     }
     
-    let kLabelLeftMargin: CGFloat = 15.0
+    let kLabelLeftMargin: CGFloat = 25
     let kUICuesMargin: CGFloat = 10.0, kUICuesWidth: CGFloat = 50.0
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -134,8 +143,8 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
             tickLabel.alpha = cueAlpha
             crossLabel.alpha = cueAlpha
             // indicate when the user has pulled the item far enough to invoke the given action
-            tickLabel.textColor = completeOnDragRelease ? UIColor.greenColor() : UIColor.whiteColor()
-            crossLabel.textColor = deleteOnDragRelease ? UIColor.redColor() : UIColor.whiteColor()
+            tickLabel.textColor = completeOnDragRelease ? UIColor.redColor() : UIColor.lightGrayColor()
+            crossLabel.textColor = deleteOnDragRelease ? UIColor.redColor() : UIColor.lightGrayColor()
         }
         // 3
         if recognizer.state == .Ended {

@@ -7,13 +7,8 @@
 //
 
 import UIKit
-class Color {
-	static let textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.7)
-	static let placeHoderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.4)
-	static let themecolor = UIColor(red: 39/255, green: 175/255, blue: 15/255, alpha: 1)
-	static let test = UIColor(red: 92/255, green: 210/255, blue: 166/255, alpha: 0.7)
 
-}
+
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, TableViewCellDelegate {
 	
 	@IBOutlet weak var tableView: UITableView!
@@ -31,24 +26,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		tableView.delegate = self
 		tableView.registerClass(TableViewCell.self, forCellReuseIdentifier: "cell")
 		tableView.separatorStyle = .None
-		tableView.backgroundColor = Color.test
+		tableView.backgroundColor = UIColor.whiteColor()
 		tableView.rowHeight = 50
 		
-		if toDoItems.count > 0 {
-			return
-		}
-		toDoItems.append(ToDoItem(text: "feed the cat"))
-		toDoItems.append(ToDoItem(text: "buy eggs"))
-		toDoItems.append(ToDoItem(text: "watch WWDC videos"))
-		toDoItems.append(ToDoItem(text: "rule the Web"))
-		toDoItems.append(ToDoItem(text: "buy a new iPhone"))
-		toDoItems.append(ToDoItem(text: "darn holes in socks"))
-		toDoItems.append(ToDoItem(text: "write this tutorial"))
-		toDoItems.append(ToDoItem(text: "master Swift"))
-		toDoItems.append(ToDoItem(text: "learn to draw"))
-		toDoItems.append(ToDoItem(text: "get more exercise"))
-		toDoItems.append(ToDoItem(text: "catch up with Mom"))
-		toDoItems.append(ToDoItem(text: "get a hair cut"))
+		toDoItems = ToDoAPI.sharedInstance.getItems()
+		
+		
+		
+		
 	}
 	
 	// MARK: Button Action
@@ -160,7 +145,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	func colorForIndex(index: Int) -> UIColor {
 		let itemCount = toDoItems.count - 1
 		let val = (CGFloat(index) / CGFloat(itemCount)) * 0.6
-		return Color.test
+		return UIColor.whiteColor()
 	}
 	
 	let kRowHeight: CGFloat = 50.0

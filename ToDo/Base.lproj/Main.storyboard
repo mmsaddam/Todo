@@ -17,36 +17,32 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="x0T-KS-0bK">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="556"/>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="x0T-KS-0bK">
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="544"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <color key="sectionIndexBackgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
                             </tableView>
-                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Xg5-6N-X8p">
-                                <rect key="frame" x="0.0" y="556" width="600" height="44"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ehH-Qg-sIr">
+                                <rect key="frame" x="280" y="552" width="40" height="40"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="44" id="JQn-Pq-Nvv"/>
+                                    <constraint firstAttribute="width" constant="40" id="bcU-3c-TlU"/>
+                                    <constraint firstAttribute="height" constant="40" id="d3d-Dg-U3M"/>
                                 </constraints>
-                                <items>
-                                    <barButtonItem systemItem="refresh" id="5KA-ae-ccS"/>
-                                    <barButtonItem style="plain" systemItem="flexibleSpace" id="1Yk-8r-Xqz"/>
-                                    <barButtonItem systemItem="add" id="3DG-PN-2Jb">
-                                        <connections>
-                                            <action selector="addAction:" destination="BYZ-38-t0r" id="sJz-hF-E1J"/>
-                                        </connections>
-                                    </barButtonItem>
-                                </items>
-                            </toolbar>
+                                <state key="normal" image="plus.png"/>
+                                <connections>
+                                    <action selector="addAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="z2i-ew-mx5"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="Xg5-6N-X8p" secondAttribute="bottom" id="5Ic-e3-qtd"/>
-                            <constraint firstItem="x0T-KS-0bK" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="RaQ-lg-i0F"/>
-                            <constraint firstAttribute="trailing" secondItem="x0T-KS-0bK" secondAttribute="trailing" id="SGl-Od-9fY"/>
-                            <constraint firstItem="Xg5-6N-X8p" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Sux-Jk-pph"/>
-                            <constraint firstItem="Xg5-6N-X8p" firstAttribute="top" secondItem="x0T-KS-0bK" secondAttribute="bottom" id="Y7d-oC-elS"/>
-                            <constraint firstAttribute="trailing" secondItem="Xg5-6N-X8p" secondAttribute="trailing" id="sYu-Yt-Chv"/>
-                            <constraint firstItem="x0T-KS-0bK" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="u7Q-GU-iVC"/>
+                            <constraint firstItem="x0T-KS-0bK" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="3UH-Cj-hSj"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="ehH-Qg-sIr" secondAttribute="bottom" constant="8" id="8Yi-pf-t93"/>
+                            <constraint firstItem="ehH-Qg-sIr" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="Cha-M0-e0V"/>
+                            <constraint firstAttribute="trailing" secondItem="x0T-KS-0bK" secondAttribute="trailing" id="KbB-lY-J0E"/>
+                            <constraint firstItem="x0T-KS-0bK" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Kwx-sO-DQs"/>
+                            <constraint firstItem="ehH-Qg-sIr" firstAttribute="top" secondItem="x0T-KS-0bK" secondAttribute="bottom" constant="8" id="rhz-KV-Fw1"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="ehH-Qg-sIr" secondAttribute="bottom" constant="8" id="uI3-Jb-WNH"/>
                         </constraints>
                     </view>
                     <connections>
@@ -55,7 +51,10 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="305" y="429"/>
+            <point key="canvasLocation" x="414" y="361"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="plus.png" width="128" height="128"/>
+    </resources>
 </document>
