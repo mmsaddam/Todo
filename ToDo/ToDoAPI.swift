@@ -32,21 +32,31 @@ class ToDoAPI: NSObject {
 	
 	/// Get the all items
 	func getItems() -> [ToDoItem] {
-		return persistenceManager.getItems()
+		return persistenceManager.toDoItems
 	}
 	
 	// add new item into array
 	func addNewItem(item: ToDoItem, completion: completionHandler) {
-	  persistenceManager.addNewItem(item) { (isSuccess, error) in
+
+		 persistenceManager.addNewItem(item) { (isSuccess, error) in
 			completion(isSuccess: isSuccess, error: error)
 		}
+		
 	}
   
-  func updateItem(index: Int, item: ToDoItem, completion:completionHandler){
-     persistenceManager.updateItem(index, item: item) { (isSuccess, error) -> Void in
+  func updateItem(item: ToDoItem, completion:completionHandler){
+     persistenceManager.updateItem(item) { (isSuccess, error) -> Void in
       completion(isSuccess: isSuccess, error: error)
     }
   }
+	
+	func deleteItem(item: ToDoItem, completion: completionHandler){
+
+		persistenceManager.deleteItem(item) { (isSuccess, error) in
+			completion(isSuccess: isSuccess, error: error)
+		}
+	}
+	
   
 //  func updateItem(item: ToDoItem, completion:completionHandler){
 //    persistenceManager.updateItem(item) { (isSuccess, error) -> Void in

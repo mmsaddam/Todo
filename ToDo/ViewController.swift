@@ -13,13 +13,17 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	
 	@IBOutlet weak var tableView: UITableView!
 	
-	var toDoItems = [ToDoItem]()
+	var toDoItems :[ToDoItem] = []
+	
 	let pinchRecognizer = UIPinchGestureRecognizer()
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
-		pinchRecognizer.addTarget(self, action: Selector("handlePinch:"))
+		pinchRecognizer.addTarget(self, action: #selector(ViewController.handlePinch(_:)))
+		self.toDoItems = ToDoAPI.sharedInstance.getItems()
+
+	//	pinchRecognizer.addTarget(self, action: Selector("handlePinch:"))
 		tableView.addGestureRecognizer(pinchRecognizer)
 		
 		tableView.dataSource = self
@@ -45,7 +49,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
   // MARK: Update Changes
   
   func adaptedAnyChanges(){
-    toDoItems = ToDoAPI.sharedInstance.getItems()
+		
     self.tableView.reloadData()
   }
 	
@@ -101,12 +105,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
       guard let item = editingCell.toDoItem else{
         return
       }
+			//toDoItemUpdated(item)
       
-      for (index,itm) in self.toDoItems.enumerate(){
+      for ( _ ,itm) in self.toDoItems.enumerate(){
         if itm.createdAt == item.createdAt{
-          ToDoAPI.sharedInstance.updateItem(index, item: item, completion: { (isSuccess, error) -> Void in
+          ToDoAPI.sharedInstance.updateItem(item, completion: { (isSuccess, error) -> Void in
             if isSuccess{
-              self.adaptedAnyChanges()
+							print("updated succssfully...")
+             // self.adaptedAnyChanges()
             }else{
               print("updating failed")
             }
@@ -114,16 +120,19 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
           break
         }
       }
-    
+			
     }
 	}
-  
+	
+	// MARK: Update item
+
   func toDoItemUpdated(toDoItem: ToDoItem) {
   
-    for (index,itm) in self.toDoItems.enumerate(){
+    for ( _ , itm) in self.toDoItems.enumerate(){
       if itm.createdAt == toDoItem.createdAt{
-        ToDoAPI.sharedInstance.updateItem(index, item: toDoItem, completion: { (isSuccess, error) -> Void in
+        ToDoAPI.sharedInstance.updateItem(toDoItem, completion: { (isSuccess, error) -> Void in
           if isSuccess{
+						//self.toDoItems[index] = toDoItem
             self.adaptedAnyChanges()
           }else{
             print("updating failed")
@@ -135,50 +144,66 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
   }
 	
+	// MARK: Delete Item
+
+	
 	func toDoItemDeleted(toDoItem: ToDoItem) {
 		// could use this to get index when Swift Array indexOfObject works
 		// let index = toDoItems.indexOfObject(toDoItem)
 		// in the meantime, scan the array to find index of item to delete
 		var index = 0
 		for i in 0..<toDoItems.count {
-			if toDoItems[i] === toDoItem {  // note: === not ==
+			if toDoItems[i].createdAt == toDoItem.createdAt {  // note: === not ==
 				index = i
 				break
 			}
 		}
-    
-		// could removeAtIndex in the loop but keep it here for when indexOfObject works
-		toDoItems.removeAtIndex(index)
 		
-		// loop over the visible cells to animate delete
-		let visibleCells = tableView.visibleCells as! [TableViewCell]
-		let lastView = visibleCells[visibleCells.count - 1] as TableViewCell
-		var delay = 0.0
-		var startAnimating = false
-		for i in 0..<visibleCells.count {
-			let cell = visibleCells[i]
-			if startAnimating {
-				UIView.animateWithDuration(0.3, delay: delay, options: .CurveEaseInOut,
-				                           animations: {() in
-																		cell.frame = CGRectOffset(cell.frame, 0.0, -cell.frame.size.height)},
-				                           completion: {(finished: Bool) in if (cell == lastView) {
-																		self.tableView.reloadData()
-																		}
+		print(self.toDoItems.count)
+		self.toDoItems.removeAtIndex(index)
+
+		ToDoAPI.sharedInstance.deleteItem(toDoItem) { (isSuccess, error) in
+			if isSuccess{
+				print(self.toDoItems.count)
+
+				// could removeAtIndex in the loop but keep it here for when indexOfObject works
+				
+				// loop over the visible cells to animate delete
+				let visibleCells = self.tableView.visibleCells as! [TableViewCell]
+				let lastView = visibleCells[visibleCells.count - 1] as TableViewCell
+				var delay = 0.0
+				var startAnimating = false
+				for i in 0..<visibleCells.count {
+					let cell = visibleCells[i]
+					if startAnimating {
+						UIView.animateWithDuration(0.3, delay: delay, options: .CurveEaseInOut,
+						                           animations: {() in
+																				cell.frame = CGRectOffset(cell.frame, 0.0, -cell.frame.size.height)},
+						                           completion: {(finished: Bool) in if (cell == lastView) {
+																				self.tableView.reloadData()
+																				}
+							}
+						)
+						delay += 0.03
 					}
-				)
-				delay += 0.03
-			}
-			if cell.toDoItem === toDoItem {
-				startAnimating = true
-				cell.hidden = true
+					if cell.toDoItem === toDoItem {
+						startAnimating = true
+						cell.hidden = true
+					}
+				}
+				
+				// use the UITableView to animate the removal of this row
+				self.tableView.beginUpdates()
+				let indexPathForRow = NSIndexPath(forRow: index, inSection: 0)
+				self.tableView.deleteRowsAtIndexPaths([indexPathForRow], withRowAnimation: .Fade)
+				self.tableView.endUpdates()
+			}else{
+				
 			}
 		}
 		
-		// use the UITableView to animate the removal of this row
-		tableView.beginUpdates()
-		let indexPathForRow = NSIndexPath(forRow: index, inSection: 0)
-		tableView.deleteRowsAtIndexPaths([indexPathForRow], withRowAnimation: .Fade)
-		tableView.endUpdates()
+		
+
 	}
 	// MARK: - Table view delegate
 	
@@ -393,6 +418,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		let toDoItem = ToDoItem(text: "")
     // Insert New Item
 		toDoItems.insert(toDoItem, atIndex: index)
+		ToDoAPI.sharedInstance.addNewItem(toDoItem) { (isSuccess, error) in
+			if isSuccess{
+				print("added successfully....")
+			}else{
+				print("fail to add ....")
+
+			}
+		}
 		tableView.reloadData()
 		// enter edit mode
 		var editCell: TableViewCell
