@@ -41,5 +41,17 @@ class ToDoAPI: NSObject {
 			completion(isSuccess: isSuccess, error: error)
 		}
 	}
+  
+  func updateItem(index: Int, item: ToDoItem, completion:completionHandler){
+     persistenceManager.updateItem(index, item: item) { (isSuccess, error) -> Void in
+      completion(isSuccess: isSuccess, error: error)
+    }
+  }
+  
+//  func updateItem(item: ToDoItem, completion:completionHandler){
+//    persistenceManager.updateItem(item) { (isSuccess, error) -> Void in
+//      completion(isSuccess: isSuccess, error: error)
+//    }
+//  }
 	
 }

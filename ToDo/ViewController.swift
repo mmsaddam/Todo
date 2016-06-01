@@ -19,7 +19,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
-		pinchRecognizer.addTarget(self, action: #selector(ViewController.handlePinch(_:)))
+		pinchRecognizer.addTarget(self, action: Selector("handlePinch:"))
 		tableView.addGestureRecognizer(pinchRecognizer)
 		
 		tableView.dataSource = self
@@ -29,10 +29,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		tableView.backgroundColor = UIColor.whiteColor()
 		tableView.rowHeight = 50
 		
-		toDoItems = ToDoAPI.sharedInstance.getItems()
-		
-		
-		
+		adaptedAnyChanges()
 		
 	}
 	
@@ -45,6 +42,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 
 	}
 	
+  // MARK: Update Changes
+  
+  func adaptedAnyChanges(){
+    toDoItems = ToDoAPI.sharedInstance.getItems()
+    self.tableView.reloadData()
+  }
 	
 	// MARK: - Table view data source
 	
@@ -93,8 +96,44 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		}
 		if editingCell.toDoItem!.text == "" {
 			toDoItemDeleted(editingCell.toDoItem!)
-		}
+    }else{
+    
+      guard let item = editingCell.toDoItem else{
+        return
+      }
+      
+      for (index,itm) in self.toDoItems.enumerate(){
+        if itm.createdAt == item.createdAt{
+          ToDoAPI.sharedInstance.updateItem(index, item: item, completion: { (isSuccess, error) -> Void in
+            if isSuccess{
+              self.adaptedAnyChanges()
+            }else{
+              print("updating failed")
+            }
+          })
+          break
+        }
+      }
+    
+    }
 	}
+  
+  func toDoItemUpdated(toDoItem: ToDoItem) {
+  
+    for (index,itm) in self.toDoItems.enumerate(){
+      if itm.createdAt == toDoItem.createdAt{
+        ToDoAPI.sharedInstance.updateItem(index, item: toDoItem, completion: { (isSuccess, error) -> Void in
+          if isSuccess{
+            self.adaptedAnyChanges()
+          }else{
+            print("updating failed")
+          }
+        })
+        break
+      }
+    }
+
+  }
 	
 	func toDoItemDeleted(toDoItem: ToDoItem) {
 		// could use this to get index when Swift Array indexOfObject works
@@ -107,6 +146,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 				break
 			}
 		}
+    
 		// could removeAtIndex in the loop but keep it here for when indexOfObject works
 		toDoItems.removeAtIndex(index)
 		
@@ -351,6 +391,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	
 	func toDoItemAddedAtIndex(index: Int) {
 		let toDoItem = ToDoItem(text: "")
+    // Insert New Item
 		toDoItems.insert(toDoItem, atIndex: index)
 		tableView.reloadData()
 		// enter edit mode

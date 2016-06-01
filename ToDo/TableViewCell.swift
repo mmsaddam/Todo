@@ -17,6 +17,8 @@ protocol TableViewCellDelegate {
     func cellDidBeginEditing(editingCell: TableViewCell)
     // Indicates that the edit process has committed for the given cell
     func cellDidEndEditing(editingCell: TableViewCell)
+    // Indicates that item is completed or uncompleted
+    func toDoItemUpdated(toDoItem: ToDoItem)
 }
 
 class TableViewCell: UITableViewCell, UITextFieldDelegate {
@@ -104,7 +106,8 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
 			  layer.insertSublayer(iconLayer, atIndex: 0)
         
         // add a pan recognizer
-        let recognizer = UIPanGestureRecognizer(target: self, action: #selector(TableViewCell.handlePan(_:)))
+         
+        let recognizer = UIPanGestureRecognizer(target: self, action:  Selector("handlePan:"))
         recognizer.delegate = self
         addGestureRecognizer(recognizer)
     }
@@ -165,8 +168,10 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
 										toDoItem!.completed = true
 										label.strikeThrough = true
 										itemCompleteLayer.hidden = false
+                    //
 									}
-									
+                  delegate!.toDoItemUpdated(toDoItem!)
+
                 }
 							
                 UIView.animateWithDuration(0.2, animations: {self.frame = originalFrame})
@@ -177,6 +182,7 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
     }
     
     override func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
+      
         if let panGestureRecognizer = gestureRecognizer as? UIPanGestureRecognizer {
             let translation = panGestureRecognizer.translationInView(superview!)
             if fabs(translation.x) > fabs(translation.y) {

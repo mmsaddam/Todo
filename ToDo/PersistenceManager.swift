@@ -15,12 +15,17 @@ typealias completionHandler = (isSuccess: Bool ,error: NSError?)->Void
 class PersistenceManager: NSObject {
 
 	let managedContext = appDelegate.managedObjectContext
-	 private var toDoItems = [ToDoItem]()
+  private var toDoItems = [ToDoItem]()
+  
+  private var entityObjects = [NSManagedObject]()
 	
 	override init() {
 		
 		super.init()
-		self.toDoItems = self.fetchDateFromCoreData()
+    
+		self.entityObjects = self.fetchManageObjects(entityName)
+    self.toDoItems = self.getItems()
+    
 		if self.toDoItems.isEmpty {
 			toDoItems.append(ToDoItem(text: "feed the cat"))
 			toDoItems.append(ToDoItem(text: "buy eggs"))
@@ -46,17 +51,24 @@ class PersistenceManager: NSObject {
 		}
 
 	}
-	
+  
 	/// Get the all items are created
 	/// - returns [ToDoItem]: Array of ToDoItem data model
 	
 	func getItems()->[ToDoItem]{
-		return self.toDoItems
+    
+    var items = [ToDoItem]()
+    for entity in entityObjects {
+      let item = getItemFromNSManageObject(entity)
+      items.append(item)
+    }
+		return items
 	}
 	
 	/// Add new item into the todoitem array and save into core date.
 	/// - parameter item: ToDoItem to add.
 	/// - parameter completion: completion handler block to ensure the save result.
+  
 	func addNewItem(item: ToDoItem, completion: completionHandler) {
 		self.toDoItems.append(item)
 		saveItem(item) { (isSuccess, error) in
@@ -64,11 +76,11 @@ class PersistenceManager: NSObject {
 		}
 	}
 	
-	/// Fetch the  date from NSManageObjectContext and convert into ToDoItem data model
-	/// - parameter: Nothing
-	/// - returns [ToDoItem]: ToDoItem data Model array
+	/// Fetch all NSManageObject Entity from Core Data
+	/// - parameter entityName: Name of the entity.
+	/// - returns [NSManagedObject]: NSManagedObject Array.
 	
-	func fetchDateFromCoreData()-> [ToDoItem]  {
+  func fetchManageObjects(entityName: String)-> [NSManagedObject]  {
 		
 		let fetchRequest = NSFetchRequest(entityName: entityName)
 		
@@ -76,17 +88,13 @@ class PersistenceManager: NSObject {
 			let results =
 				try managedContext.executeFetchRequest(fetchRequest)
 			let entityObjects = results as! [NSManagedObject]
-			var toToItems = [ToDoItem]()
-			for entity in entityObjects {
-				let item = getItemFromNSManageObject(entity)
-				toToItems.append(item)
-			}
-			
+      
+      return entityObjects
 			
 		} catch let error as NSError {
 			print("Could not fetch \(error), \(error.userInfo)")
 		}
-		return toDoItems
+		return []
 	}
 	
 	/// Get the To Do item date model form the NSManageObject Entity Model
@@ -131,4 +139,40 @@ class PersistenceManager: NSObject {
 	}
 
 	
+}
+
+// MARK: Add, Edit, Delete 
+
+extension PersistenceManager{
+  
+  func updateItem(index: Int, item: ToDoItem, completion:completionHandler){
+    
+    self.updateEntityObject(self.entityObjects[index], item: item, completion: { (isSuccess, error) -> Void in
+      if isSuccess{
+        completion(isSuccess: isSuccess, error: error)
+
+      }else{
+        completion(isSuccess: false, error: nil)
+
+      }
+    })
+  }
+  
+ private func updateEntityObject(entity: NSManagedObject, item: ToDoItem, completion: completionHandler){
+    
+    entity.setValue(item.text, forKey: AllKeys.text)
+    entity.setValue(item.createdAt, forKey: AllKeys.createdAt)
+    entity.setValue(item.itemType.rawValue, forKey: AllKeys.itemType)
+    entity.setValue(item.completed, forKey: AllKeys.completed)
+    
+    do {
+      try managedContext.save()
+      completion(isSuccess: true,error: nil)
+    } catch let error as NSError{
+      print("Error \(error.userInfo)")
+      completion(isSuccess: false,error: error)
+    }
+    
+  }
+
 }
