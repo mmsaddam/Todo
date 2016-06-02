@@ -9,21 +9,39 @@
 import UIKit
 
 
+
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, TableViewCellDelegate {
 	
 	@IBOutlet weak var tableView: UITableView!
 	
-	var toDoItems :[ToDoItem] = []
+	let kRowHeight: CGFloat = 50.0
+	
+	var toDoItems :[ToDoItem] = []{
+		didSet{
+			self.loadItems()
+		}
+	}
+	
+	var today: [ToDoItem] = []
+	var tomorrow: [ToDoItem] = []
+	var upcoming: [ToDoItem] = []
+	
+	var newItemType = ItemType.Today // default new item would be added
 	
 	let pinchRecognizer = UIPinchGestureRecognizer()
+	
+	var tableHeader: [TableHeader] = []
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
-		pinchRecognizer.addTarget(self, action: #selector(ViewController.handlePinch(_:)))
+		
+	
+		loadHeaders()
+	//	pinchRecognizer.addTarget(self, action: #selector(ViewController.handlePinch(_:)))
 		self.toDoItems = ToDoAPI.sharedInstance.getItems()
-
-	//	pinchRecognizer.addTarget(self, action: Selector("handlePinch:"))
+		loadItems()
+		//	pinchRecognizer.addTarget(self, action: Selector("handlePinch:"))
 		tableView.addGestureRecognizer(pinchRecognizer)
 		
 		tableView.dataSource = self
@@ -31,53 +49,144 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		tableView.registerClass(TableViewCell.self, forCellReuseIdentifier: "cell")
 		tableView.separatorStyle = .None
 		tableView.backgroundColor = UIColor.whiteColor()
-		tableView.rowHeight = 50
+		tableView.rowHeight = kRowHeight
 		
-		adaptedAnyChanges()
 		
 	}
+	
+	func loadHeaders() {
+		
+		let frame = CGRectMake(0, 0, CGRectGetWidth(tableView.frame), kRowHeight)
+		for section in 0...2 {
+			let header = TableHeader(frame: frame)
+			header.addBtn.addTarget(self, action: #selector(ViewController.addAction(_:)), forControlEvents: .TouchUpInside)
+			header.addBtn.tag = section
+			
+			switch section {
+			case 0: header.title.text = "TODAY"
+			case 1: header.title.text = "TOMORROW"
+			default: header.title.text = "UPCOMING"
+			}
+			tableHeader.append(header)
+
+		}
+		
+	}
+	
+	func hideAllHeader(isHide: Bool)  {
+		for itm in tableView.subviews {
+			if itm.isKindOfClass(TableHeader) {
+					itm.hidden = isHide
+			}
+			
+		}
+	}
+	
+	func loadItems()  {
+		 today = []
+		 tomorrow = []
+		 upcoming = []
+		for itm in self.toDoItems {
+			switch itm.itemType {
+			case .Today: today.append(itm)
+			case .Tomorrow: tomorrow.append(itm)
+			default: upcoming.append(itm)
+				
+			}
+		}
+	}
+	
 	
 	// MARK: Button Action
 	
 	@IBAction func addAction(sender: AnyObject) {
 		
+		let addBtn = sender as! UIButton
+		
+		switch addBtn.tag {
+		case 0:
+			self.newItemType = ItemType.Today
+		case 1:
+			self.newItemType = ItemType.Tomorrow
+		default:
+			self.newItemType = ItemType.Upcoming
+		}
+		
 		self.tableView.setContentOffset(CGPointMake(0, 0), animated: false)
 		self.toDoItemAdded()
-
+		
 	}
 	
-  // MARK: Update Changes
-  
-  func adaptedAnyChanges(){
-		
-    self.tableView.reloadData()
-  }
+	
 	
 	// MARK: - Table view data source
 	
 	func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-		return 1
+		return 3
 	}
 	
 	func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-		return toDoItems.count
+		switch section {
+		case 0:
+			return today.count
+		case 1:
+			return tomorrow.count
+		default:
+			return upcoming.count
+		}
+		
 	}
 	
+	func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat{
+		return kRowHeight
+	}
+	
+  func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+		let frame = CGRectMake(0, 0, CGRectGetWidth(tableView.frame), kRowHeight)
+
+		let header = TableHeader(frame: frame)
+		header.addBtn.addTarget(self, action: #selector(ViewController.addAction(_:)), forControlEvents: .TouchUpInside)
+		header.addBtn.tag = section
+		
+		switch section {
+		case 0: header.title.text = "TODAY"
+		case 1: header.title.text = "TOMORROW"
+		default: header.title.text = "UPCOMING"
+		}
+
+		
+		return header
+		
+	}
+
 	func tableView(tableView: UITableView,
 	               cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCellWithIdentifier("cell", forIndexPath: indexPath) as! TableViewCell
 		cell.selectionStyle = .None
 		cell.textLabel?.backgroundColor = UIColor.clearColor()
-		let item = toDoItems[indexPath.row]
-		//            cell.textLabel?.text = item.text
+		
+		//let item = today[indexPath.row]
+		
+		if indexPath.section == 0 {
+				cell.toDoItem = today[indexPath.row]
+		}else if indexPath.section == 1 {
+				cell.toDoItem = tomorrow[indexPath.row]
+		}else{
+				cell.toDoItem = upcoming[indexPath.row]
+		}
+		
 		cell.delegate = self
-		cell.toDoItem = item
+	
 		return cell
 	}
 	
 	func cellDidBeginEditing(editingCell: TableViewCell) {
+		hideAllHeader(true) // hide header view
+		
 		let editingOffset = tableView.contentOffset.y - editingCell.frame.origin.y as CGFloat
 		let visibleCells = tableView.visibleCells as! [TableViewCell]
+		
+		
 		for cell in visibleCells {
 			UIView.animateWithDuration(0.3, animations: {() in
 				cell.transform = CGAffineTransformMakeTranslation(0, editingOffset)
@@ -89,6 +198,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	}
 	
 	func cellDidEndEditing(editingCell: TableViewCell) {
+		hideAllHeader(false) // show header view
 		let visibleCells = tableView.visibleCells as! [TableViewCell]
 		for cell: TableViewCell in visibleCells {
 			UIView.animateWithDuration(0.3, animations: {() in
@@ -100,120 +210,37 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		}
 		if editingCell.toDoItem!.text == "" {
 			toDoItemDeleted(editingCell.toDoItem!)
-    }else{
-    
-      guard let item = editingCell.toDoItem else{
-        return
-      }
-			//toDoItemUpdated(item)
-      
-      for ( _ ,itm) in self.toDoItems.enumerate(){
-        if itm.createdAt == item.createdAt{
-          ToDoAPI.sharedInstance.updateItem(item, completion: { (isSuccess, error) -> Void in
-            if isSuccess{
-							print("updated succssfully...")
-             // self.adaptedAnyChanges()
-            }else{
-              print("updating failed")
-            }
-          })
-          break
-        }
-      }
+		}else{
 			
-    }
-	}
-	
-	// MARK: Update item
-
-  func toDoItemUpdated(toDoItem: ToDoItem) {
-  
-    for ( _ , itm) in self.toDoItems.enumerate(){
-      if itm.createdAt == toDoItem.createdAt{
-        ToDoAPI.sharedInstance.updateItem(toDoItem, completion: { (isSuccess, error) -> Void in
-          if isSuccess{
-						//self.toDoItems[index] = toDoItem
-            self.adaptedAnyChanges()
-          }else{
-            print("updating failed")
-          }
-        })
-        break
-      }
-    }
-
-  }
-	
-	// MARK: Delete Item
-
-	
-	func toDoItemDeleted(toDoItem: ToDoItem) {
-		// could use this to get index when Swift Array indexOfObject works
-		// let index = toDoItems.indexOfObject(toDoItem)
-		// in the meantime, scan the array to find index of item to delete
-		var index = 0
-		for i in 0..<toDoItems.count {
-			if toDoItems[i].createdAt == toDoItem.createdAt {  // note: === not ==
-				index = i
-				break
+			guard let item = editingCell.toDoItem else{
+				return
 			}
-		}
-		
-		print(self.toDoItems.count)
-		self.toDoItems.removeAtIndex(index)
-
-		ToDoAPI.sharedInstance.deleteItem(toDoItem) { (isSuccess, error) in
-			if isSuccess{
-				print(self.toDoItems.count)
-
-				// could removeAtIndex in the loop but keep it here for when indexOfObject works
-				
-				// loop over the visible cells to animate delete
-				let visibleCells = self.tableView.visibleCells as! [TableViewCell]
-				let lastView = visibleCells[visibleCells.count - 1] as TableViewCell
-				var delay = 0.0
-				var startAnimating = false
-				for i in 0..<visibleCells.count {
-					let cell = visibleCells[i]
-					if startAnimating {
-						UIView.animateWithDuration(0.3, delay: delay, options: .CurveEaseInOut,
-						                           animations: {() in
-																				cell.frame = CGRectOffset(cell.frame, 0.0, -cell.frame.size.height)},
-						                           completion: {(finished: Bool) in if (cell == lastView) {
-																				self.tableView.reloadData()
-																				}
-							}
-						)
-						delay += 0.03
-					}
-					if cell.toDoItem === toDoItem {
-						startAnimating = true
-						cell.hidden = true
-					}
+			//toDoItemUpdated(item)
+			
+			for ( _ ,itm) in self.toDoItems.enumerate(){
+				if itm.createdAt == item.createdAt{
+					ToDoAPI.sharedInstance.updateItem(item, completion: { (isSuccess, error) -> Void in
+						if isSuccess{
+							print("updated succssfully...")
+							// self.adaptedAnyChanges()
+						}else{
+							print("updating failed")
+						}
+					})
+					break
 				}
-				
-				// use the UITableView to animate the removal of this row
-				self.tableView.beginUpdates()
-				let indexPathForRow = NSIndexPath(forRow: index, inSection: 0)
-				self.tableView.deleteRowsAtIndexPaths([indexPathForRow], withRowAnimation: .Fade)
-				self.tableView.endUpdates()
-			}else{
-				
 			}
+			
 		}
-		
-		
-
 	}
+	
 	// MARK: - Table view delegate
 	
 	func colorForIndex(index: Int) -> UIColor {
-		let itemCount = toDoItems.count - 1
-		let val = (CGFloat(index) / CGFloat(itemCount)) * 0.6
 		return UIColor.whiteColor()
 	}
 	
-	let kRowHeight: CGFloat = 50.0
+	
 	func tableView(tableView: UITableView,
 	               heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
 		return kRowHeight
@@ -402,13 +429,89 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
 		// check whether the user pulled down far enough
 		if pullDownInProgress && -scrollView.contentOffset.y > tableView.rowHeight {
-			toDoItemAdded()
+		//	toDoItemAdded()
 		}
 		pullDownInProgress = false
 		placeHolderCell.removeFromSuperview()
 	}
 	
-	// MARK: - add, delete, edit methods
+	
+	// MARK: Update item
+	
+	func toDoItemUpdated(toDoItem: ToDoItem) {
+  
+		for ( _ , itm) in self.toDoItems.enumerate(){
+			if itm.createdAt == toDoItem.createdAt{
+				ToDoAPI.sharedInstance.updateItem(toDoItem, completion: { (isSuccess, error) -> Void in
+					if isSuccess{
+						//self.toDoItems[index] = toDoItem
+					//	self.adaptedAnyChanges()
+					}else{
+						print("updating failed")
+					}
+				})
+				break
+			}
+		}
+		
+	}
+	
+	// MARK: Delete Item
+	
+	func toDoItemDeleted(toDoItem: ToDoItem) {
+		// could use this to get index when Swift Array indexOfObject works
+		// let index = toDoItems.indexOfObject(toDoItem)
+		// in the meantime, scan the array to find index of item to delete
+		var index = 0
+		for i in 0..<toDoItems.count {
+			if toDoItems[i].createdAt == toDoItem.createdAt {  // note: === not ==
+				index = i
+				break
+			}
+		}
+		
+		self.toDoItems.removeAtIndex(index)
+		
+		ToDoAPI.sharedInstance.deleteItem(toDoItem) { (isSuccess, error) in
+			if isSuccess{
+				
+				// could removeAtIndex in the loop but keep it here for when indexOfObject works
+				
+				// loop over the visible cells to animate delete
+				let visibleCells = self.tableView.visibleCells as! [TableViewCell]
+				let lastView = visibleCells[visibleCells.count - 1] as TableViewCell
+				var delay = 0.0
+				var startAnimating = false
+				for i in 0..<visibleCells.count {
+					let cell = visibleCells[i]
+					if startAnimating {
+						UIView.animateWithDuration(0.3, delay: delay, options: .CurveEaseInOut,
+						                           animations: {() in
+																				cell.frame = CGRectOffset(cell.frame, 0.0, -cell.frame.size.height)},
+						                           completion: {(finished: Bool) in if (cell == lastView) {
+																				self.tableView.reloadData()
+																				}
+							}
+						)
+						delay += 0.03
+					}
+					if cell.toDoItem === toDoItem {
+						startAnimating = true
+						cell.hidden = true
+					}
+				}
+				
+	
+//				// use the UITableView to animate the removal of this row
+//				self.tableView.beginUpdates()
+//				let indexPathForRow = NSIndexPath(forRow: index, inSection: toDoItem.itemType.rawValue)
+//				self.tableView.deleteRowsAtIndexPaths([indexPathForRow], withRowAnimation: .Fade)
+//				self.tableView.endUpdates()
+			}else{
+				
+			}
+		}
+	}
 	
 	func toDoItemAdded() {
 		toDoItemAddedAtIndex(0)
@@ -416,27 +519,39 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	
 	func toDoItemAddedAtIndex(index: Int) {
 		let toDoItem = ToDoItem(text: "")
-    // Insert New Item
+			toDoItem.itemType = newItemType
+		// Insert New Item
+		
 		toDoItems.insert(toDoItem, atIndex: index)
+		tableView.reloadData()
+		
+		let row: Int = 0
+
+		let indexPath = NSIndexPath(forRow: row, inSection: newItemType.rawValue)
+		
+	  tableView.scrollToRowAtIndexPath(indexPath, atScrollPosition: .Top, animated: false)
+			
 		ToDoAPI.sharedInstance.addNewItem(toDoItem) { (isSuccess, error) in
 			if isSuccess{
-				print("added successfully....")
+				// enter edit mode
+				var editCell: TableViewCell
+				let visibleCells = self.tableView.visibleCells as! [TableViewCell]
+				for cell in visibleCells {
+					if (cell.toDoItem === toDoItem) {
+						editCell = cell
+						editCell.label.becomeFirstResponder()
+						break
+					}
+				}
+
 			}else{
 				print("fail to add ....")
-
 			}
 		}
-		tableView.reloadData()
-		// enter edit mode
-		var editCell: TableViewCell
-		let visibleCells = tableView.visibleCells as! [TableViewCell]
-		for cell in visibleCells {
-			if (cell.toDoItem === toDoItem) {
-				editCell = cell
-				editCell.label.becomeFirstResponder()
-				break
-			}
-		}
+		
 	}
+	
+	
 }
+
 

@@ -17,6 +17,7 @@ class PersistenceManager: NSObject {
 	let managedContext = appDelegate.managedObjectContext
   private var entityObjects = [NSManagedObject]()
 	
+	// get the all iteams added into database
 	lazy var toDoItems:[ToDoItem] = {
 		var items = [ToDoItem]()
 		for entity in self.entityObjects {
@@ -31,8 +32,7 @@ class PersistenceManager: NSObject {
 		super.init()
     
 		self.syncData()
-		
-		
+	
 //		if self.toDoItems.isEmpty {
 //			toDoItems.append(ToDoItem(text: "feed the cat"))
 //			toDoItems.append(ToDoItem(text: "buy eggs"))
@@ -61,10 +61,9 @@ class PersistenceManager: NSObject {
 //			print("save data restored")
 //		}
 		
-
-
 	}
 	
+	/// Syncronize data when any change made
 	func syncData()  {
 		self.entityObjects = []
 		self.entityObjects = self.fetchManageObjects(entityName)
@@ -110,7 +109,6 @@ class PersistenceManager: NSObject {
 		return item
 	}
 	
-	
 	func addNewItem(item: ToDoItem, completion: completionHandler){
 		self.saveItem(item) { (manageObject, error) in
 			if error == nil{
@@ -122,16 +120,13 @@ class PersistenceManager: NSObject {
 		}
 	}
 	
-	
 	func deleteItem(item: ToDoItem, completion: completionHandler){
-		
 		var index = 0
 		for i in 0..<toDoItems.count {
 			if toDoItems[i].createdAt == item.createdAt {  // note: === not ==
 				index = i
 				break
 			}
-			print("not found....")
 		}
 		
 		let object = self.entityObjects[index]
@@ -145,11 +140,39 @@ class PersistenceManager: NSObject {
 			}
 		}
 	}
+	
+	/// update item
+	/// - parameter item: item to updated
+	/// - paramete completion: completion handler to ensure the action is success or not
+	func updateItem(item: ToDoItem, completion:completionHandler){
+		var index = 0
+		for i in 0..<toDoItems.count {
+			if toDoItems[i].createdAt == item.createdAt {  // note: === not ==
+				index = i
+				break
+			}
+			print("not found....")
+		}
+		
+		/// update manage object and save
+		self.updateEntityObject(self.entityObjects[index], item: item, completion: { (isSuccess, error) -> Void in
+			if isSuccess{
+				self.syncData()
+				completion(isSuccess: isSuccess, error: error)
+				
+			}else{
+				completion(isSuccess: false, error: nil)
+				
+			}
+		})
 
 	
+	}
+	
+
 }
 
-// MARK: Add, Edit, Delete 
+// MARK: Add, Edit, Delete
 
 extension PersistenceManager{
 	
@@ -159,10 +182,11 @@ extension PersistenceManager{
 	///		if successfully save then call the block with error nil other wise pass the error
 	/// - returns: Nothing
 	
-	func saveItem(item: ToDoItem, completion:(manageObject: NSManagedObject? ,error: NSError?)->Void )  {
+	private func saveItem(item: ToDoItem, completion:(manageObject: NSManagedObject? ,error: NSError?)->Void )  {
 		
 		let entity =  NSEntityDescription.entityForName(entityName,
 		                                                inManagedObjectContext:managedContext)
+		// new manage object
 		let newManageObject = NSManagedObject(entity: entity!,
 		                                      insertIntoManagedObjectContext: managedContext)
 		
@@ -180,30 +204,10 @@ extension PersistenceManager{
 		}
 		
 	}
-
 	
-  func updateItem(item: ToDoItem, completion:completionHandler){
-		
-		var index = 0
-		for i in 0..<toDoItems.count {
-			if toDoItems[i].createdAt == item.createdAt {  // note: === not ==
-				index = i
-				break
-			}
-			print("not found....")
-		}
-		
-    self.updateEntityObject(self.entityObjects[index], item: item, completion: { (isSuccess, error) -> Void in
-      if isSuccess{
-				self.syncData()
-        completion(isSuccess: isSuccess, error: error)
-
-      }else{
-        completion(isSuccess: false, error: nil)
-
-      }
-    })
-  }
+	/// Delete manage object
+	/// - parameter object: The obejct have to delete
+	/// - parameter completion: Ensure the deletion action
 	
   private	func deleteManageObject(object: NSManagedObject,completion: completionHandler) {
 		
@@ -218,6 +222,11 @@ extension PersistenceManager{
 		}
 	}
 	
+	/// Update manage object
+	/// - parameter entity: The obejct have to update
+	/// - parameter item: Set the item attribute to entity object and save
+	/// - parameter completion: Ensure the deletion action
+
  private func updateEntityObject(entity: NSManagedObject, item: ToDoItem, completion: completionHandler){
     
     entity.setValue(item.text, forKey: AllKeys.text)
