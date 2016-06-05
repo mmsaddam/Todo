@@ -117,8 +117,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		
 	}
 	
-	
-	
 	// MARK: - Table view data source
 	
 	func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -166,6 +164,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		cell.textLabel?.backgroundColor = UIColor.clearColor()
 		
 		//let item = today[indexPath.row]
+		
+		
 		
 		if indexPath.section == 0 {
 				cell.toDoItem = today[indexPath.row]
@@ -472,10 +472,19 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		
 		self.toDoItems.removeAtIndex(index)
 		
+		
+		// could removeAtIndex in the loop but keep it here for when indexOfObject works
+		
+		
+		//		let path = NSIndexPath(forRow: self.findRowForItem(toDoItem), inSection: toDoItem.itemType.rawValue)
+		//		// use the UITableView to animate the removal of this row
+		//		self.tableView.beginUpdates()
+		//		self.tableView.deleteRowsAtIndexPaths([path], withRowAnimation: .Fade)
+		//		self.tableView.endUpdates()
+		
+		
 		ToDoAPI.sharedInstance.deleteItem(toDoItem) { (isSuccess, error) in
 			if isSuccess{
-				
-				// could removeAtIndex in the loop but keep it here for when indexOfObject works
 				
 				// loop over the visible cells to animate delete
 				let visibleCells = self.tableView.visibleCells as! [TableViewCell]
@@ -501,15 +510,11 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 					}
 				}
 				
-	
-//				// use the UITableView to animate the removal of this row
-//				self.tableView.beginUpdates()
-//				let indexPathForRow = NSIndexPath(forRow: index, inSection: toDoItem.itemType.rawValue)
-//				self.tableView.deleteRowsAtIndexPaths([indexPathForRow], withRowAnimation: .Fade)
-//				self.tableView.endUpdates()
 			}else{
 				
 			}
+			
+			
 		}
 	}
 	
@@ -549,6 +554,33 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 			}
 		}
 		
+	}
+	
+	func findRowForItem(item: ToDoItem) -> Int {
+		var index = 0
+		if item.itemType == .Today {
+			for i in 0..<today.count {
+				if today[i].createdAt == item.createdAt {  // note: === not ==
+					index = i
+					break
+				}
+			}
+		}else if item.itemType == .Tomorrow{
+			for i in 0..<tomorrow.count {
+				if tomorrow[i].createdAt == item.createdAt {  // note: === not ==
+					index = i
+					break
+				}
+			}
+		}else{
+			for i in 0..<upcoming.count {
+				if upcoming[i].createdAt == item.createdAt {  // note: === not ==
+					index = i
+					break
+				}
+			}
+		}
+		return index
 	}
 	
 	

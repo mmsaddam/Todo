@@ -32,6 +32,8 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
     var itemCompleteLayer = CALayer()
     // The object that acts as delegate for this cell.
     var delegate: TableViewCellDelegate?
+	
+	
     // The item that this cell renders.
     var toDoItem: ToDoItem? {
         didSet {
@@ -96,7 +98,7 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
 			
         // add a layer that renders a green background when an item is complete
         itemCompleteLayer = CALayer(layer: layer)
-        itemCompleteLayer.backgroundColor = Color.test.CGColor
+       // itemCompleteLayer.backgroundColor = Color.test.CGColor
         itemCompleteLayer.hidden = true
         layer.insertSublayer(itemCompleteLayer, atIndex: 0)
 			
@@ -107,7 +109,7 @@ class TableViewCell: UITableViewCell, UITextFieldDelegate {
         
         // add a pan recognizer
          
-        let recognizer = UIPanGestureRecognizer(target: self, action:  Selector("handlePan:"))
+        let recognizer = UIPanGestureRecognizer(target: self, action:  #selector(TableViewCell.handlePan(_:)))
         recognizer.delegate = self
         addGestureRecognizer(recognizer)
     }

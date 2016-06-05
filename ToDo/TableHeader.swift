@@ -16,10 +16,11 @@ class TableHeader: UIView {
 	override init(frame: CGRect) {
 		
 		title = UILabel(frame:CGRectMake(5, 0, 150, frame.size.height))
-		title.font = UIFont.boldSystemFontOfSize(20)
-		title.textColor = Color.textColor
+		title.font = UIFont.boldSystemFontOfSize(15)
+		//title.textColor = Color.test
+		title.textColor = Color.themecolor
 		
-		let btnFrame = CGRectMake(CGRectGetWidth(frame)-(20+15), (frame.size.height-20)/2, 20, 20)
+		let btnFrame = CGRectMake(CGRectGetWidth(frame)-(30+15), (frame.size.height-30)/2, 30, 30)
 		addBtn = UIButton(frame: btnFrame)
 		addBtn.setImage(UIImage(named: "plus.png"), forState: .Normal)
 		
