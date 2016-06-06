@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 
 
@@ -30,17 +31,34 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	
 	let pinchRecognizer = UIPinchGestureRecognizer()
 	
-	var tableHeader: [TableHeader] = []
+	var newItemPlayer : AVAudioPlayer?
+	
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
 		
-	
-		loadHeaders()
-	//	pinchRecognizer.addTarget(self, action: #selector(ViewController.handlePinch(_:)))
+		if let contentPath = NSBundle.mainBundle().pathForResource("popup", ofType: "wav"), contentUrl = NSURL(string: contentPath){
+			
+			do{
+				 newItemPlayer = try AVAudioPlayer(contentsOfURL: contentUrl)
+				//newItemPlayer.numberOfLoops = 1
+				newItemPlayer!.prepareToPlay()
+				
+				
+			}catch let error as NSError  {
+				print(error)
+			}
+			
+		}else{
+			print(" Audio File not found")
+		}
+
+		
 		self.toDoItems = ToDoAPI.sharedInstance.getItems()
 		loadItems()
+		
+		pinchRecognizer.addTarget(self, action: #selector(ViewController.handlePinch(_:)))
 		//	pinchRecognizer.addTarget(self, action: Selector("handlePinch:"))
 		tableView.addGestureRecognizer(pinchRecognizer)
 		
@@ -50,42 +68,27 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		tableView.separatorStyle = .None
 		tableView.backgroundColor = UIColor.whiteColor()
 		tableView.rowHeight = kRowHeight
-		
+		playNewItemSound()
 		
 	}
 	
-	func loadHeaders() {
-		
-		let frame = CGRectMake(0, 0, CGRectGetWidth(tableView.frame), kRowHeight)
-		for section in 0...2 {
-			let header = TableHeader(frame: frame)
-			header.addBtn.addTarget(self, action: #selector(ViewController.addAction(_:)), forControlEvents: .TouchUpInside)
-			header.addBtn.tag = section
-			
-			switch section {
-			case 0: header.title.text = "TODAY"
-			case 1: header.title.text = "TOMORROW"
-			default: header.title.text = "UPCOMING"
-			}
-			tableHeader.append(header)
-
-		}
-		
-	}
+	/// Show or hide the section header of tableView
 	
 	func hideAllHeader(isHide: Bool)  {
 		for itm in tableView.subviews {
 			if itm.isKindOfClass(TableHeader) {
-					itm.hidden = isHide
+				itm.hidden = isHide
 			}
 			
 		}
 	}
 	
+	/// Load all items created, group by catagories
+	
 	func loadItems()  {
-		 today = []
-		 tomorrow = []
-		 upcoming = []
+		today = []
+		tomorrow = []
+		upcoming = []
 		for itm in self.toDoItems {
 			switch itm.itemType {
 			case .Today: today.append(itm)
@@ -95,6 +98,18 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 			}
 		}
 	}
+	
+	
+	/// Prepayere audio player to play new item created
+	
+	func playNewItemSound()  {
+		
+		if !newItemPlayer!.playing {
+			newItemPlayer!.play()
+		}
+		
+	}
+	
 	
 	
 	// MARK: Button Action
@@ -114,6 +129,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		
 		self.tableView.setContentOffset(CGPointMake(0, 0), animated: false)
 		self.toDoItemAdded()
+	//	playNewItemSound()
 		
 	}
 	
@@ -139,9 +155,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		return kRowHeight
 	}
 	
-  func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+	func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
 		let frame = CGRectMake(0, 0, CGRectGetWidth(tableView.frame), kRowHeight)
-
+		
 		let header = TableHeader(frame: frame)
 		header.addBtn.addTarget(self, action: #selector(ViewController.addAction(_:)), forControlEvents: .TouchUpInside)
 		header.addBtn.tag = section
@@ -151,34 +167,34 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 		case 1: header.title.text = "TOMORROW"
 		default: header.title.text = "UPCOMING"
 		}
-
+		
 		
 		return header
 		
 	}
-
+	
 	func tableView(tableView: UITableView,
 	               cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCellWithIdentifier("cell", forIndexPath: indexPath) as! TableViewCell
 		cell.selectionStyle = .None
 		cell.textLabel?.backgroundColor = UIColor.clearColor()
 		
-		//let item = today[indexPath.row]
-		
-		
-		
 		if indexPath.section == 0 {
-				cell.toDoItem = today[indexPath.row]
+			cell.toDoItem = today[indexPath.row]
 		}else if indexPath.section == 1 {
-				cell.toDoItem = tomorrow[indexPath.row]
+			cell.toDoItem = tomorrow[indexPath.row]
 		}else{
-				cell.toDoItem = upcoming[indexPath.row]
+			cell.toDoItem = upcoming[indexPath.row]
 		}
 		
 		cell.delegate = self
-	
+		
 		return cell
 	}
+	
+	
+	// MARK: TableViewCell Delegate
+	
 	
 	func cellDidBeginEditing(editingCell: TableViewCell) {
 		hideAllHeader(true) // hide header view
@@ -222,6 +238,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 					ToDoAPI.sharedInstance.updateItem(item, completion: { (isSuccess, error) -> Void in
 						if isSuccess{
 							print("updated succssfully...")
+							self.playNewItemSound()
 							// self.adaptedAnyChanges()
 						}else{
 							print("updating failed")
@@ -429,7 +446,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
 		// check whether the user pulled down far enough
 		if pullDownInProgress && -scrollView.contentOffset.y > tableView.rowHeight {
-		//	toDoItemAdded()
+			//	toDoItemAdded()
 		}
 		pullDownInProgress = false
 		placeHolderCell.removeFromSuperview()
@@ -445,7 +462,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 				ToDoAPI.sharedInstance.updateItem(toDoItem, completion: { (isSuccess, error) -> Void in
 					if isSuccess{
 						//self.toDoItems[index] = toDoItem
-					//	self.adaptedAnyChanges()
+						//	self.adaptedAnyChanges()
 					}else{
 						print("updating failed")
 					}
@@ -524,18 +541,18 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 	
 	func toDoItemAddedAtIndex(index: Int) {
 		let toDoItem = ToDoItem(text: "")
-			toDoItem.itemType = newItemType
+		toDoItem.itemType = newItemType
 		// Insert New Item
 		
 		toDoItems.insert(toDoItem, atIndex: index)
 		tableView.reloadData()
 		
 		let row: Int = 0
-
+		
 		let indexPath = NSIndexPath(forRow: row, inSection: newItemType.rawValue)
 		
-	  tableView.scrollToRowAtIndexPath(indexPath, atScrollPosition: .Top, animated: false)
-			
+		tableView.scrollToRowAtIndexPath(indexPath, atScrollPosition: .Top, animated: false)
+		
 		ToDoAPI.sharedInstance.addNewItem(toDoItem) { (isSuccess, error) in
 			if isSuccess{
 				// enter edit mode
@@ -548,7 +565,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
 						break
 					}
 				}
-
+				
 			}else{
 				print("fail to add ....")
 			}

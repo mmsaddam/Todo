@@ -11,7 +11,8 @@ import UIKit
 class Color {
 	static let textColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.7)
 	static let placeHoderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.4)
-	static let themecolor = UIColor(red: 39/255, green: 175/255, blue: 15/255, alpha: 1)
+	static let themecolor = UIColor(red: 11/255, green: 154/255, blue: 201/255, alpha: 1)
+		//UIColor(red: 39/255, green: 175/255, blue: 15/255, alpha: 1)
 	static let test = UIColor(red: 92/255, green: 210/255, blue: 166/255, alpha: 0.7)
 	
 }
